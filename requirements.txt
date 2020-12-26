@@ -5,3 +5,10 @@
 # divided into groups separated by whitespace for better readability.
 #
 # For more details, read https://pip.pypa.io/en/stable/user_guide/#requirements-files
+
+# For organizing PyTorch code
+pytorch-lightning==1.1.2
+# For Hyperparameter optimization
+optuna==2.3.0
+# For configuration organization
+omegaconf==2.0.5
