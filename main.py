@@ -69,32 +69,38 @@ def main(CONFIG):
         logger.info(f"Random seed not specified: using seed {CONFIG.SEED} 🎲")
     torch.manual_seed(CONFIG.SEED)
 
-    train_kwargs = {"batch_size": CONFIG.TRAIN.BATCH_SIZE}
-    test_kwargs = {"batch_size": CONFIG.TEST.BATCH_SIZE}
-    if CONFIG.USE_GPU:
-        cuda_kwargs = {"num_workers": 1, "pin_memory": True, "shuffle": True}
-        train_kwargs.update(cuda_kwargs)
-        test_kwargs.update(cuda_kwargs)
-
+    # Initialize dataset and dataloader
     transform = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
     )
     train_dataset = datasets.MNIST(
         "./data", train=True, download=True, transform=transform
     )
-    test_dataset = datasets.MNIST("./data", train=False, transform=transform)
-    train_loader = torch.utils.data.DataLoader(train_dataset, **train_kwargs)
-    test_loader = torch.utils.data.DataLoader(test_dataset, **test_kwargs)
+    test_dataset = datasets.MNIST(
+        "./data", train=False, download=True, transform=transform
+    )
+    train_kwargs = {"batch_size": CONFIG.TRAIN.BATCH_SIZE}
+    test_kwargs = {"batch_size": CONFIG.TEST.BATCH_SIZE}
+    cuda_kwargs = {"num_workers": 1, "pin_memory": True} if CONFIG.USE_GPU else {}
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset, **train_kwargs, **cuda_kwargs
+    )
+    test_loader = torch.utils.data.DataLoader(
+        test_dataset, **test_kwargs, **cuda_kwargs
+    )
 
+    # Initialize model, optimizer, and scheduler
     model = SimpleConvNet().to(device)
     optimizer = optim.Adadelta(model.parameters(), lr=CONFIG.TRAIN.LEARNING_RATE)
-
     scheduler = StepLR(optimizer, step_size=1, gamma=CONFIG.TRAIN.LEARNING_RATE_GAMMA)
+
+    # Train model
     for epoch in range(1, CONFIG.TRAIN.EPOCHS + 1):
         train(CONFIG, model, device, train_loader, optimizer, epoch)
         test(model, device, test_loader)
         scheduler.step()
 
+    # Save model
     torch.save(model.state_dict(), "checkpoints/mnist_cnn.pth")
 
 
