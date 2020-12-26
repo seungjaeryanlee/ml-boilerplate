@@ -1,2 +1,3 @@
 # ml-boilerplate
-ML Boilerplate using PyTorch Lightning, Hydra, and Optuna
+
+My personal ML boilerplate with colorful logging and customizable configurations.
