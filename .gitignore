@@ -1,3 +1,11 @@
+# Custom ######################################################################
+# Dataset
+data/
+# Model checkpoints
+checkpoints/
+
+# Python .gitignore ###########################################################
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
