@@ -1,9 +1,7 @@
-import argparse
 import datetime
 
 from omegaconf import OmegaConf
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
@@ -27,9 +25,9 @@ def train(CONFIG, model, device, train_loader, optimizer, epoch):
         loss.backward()
         optimizer.step()
         if batch_idx % CONFIG.LOG.INTERVAL == 0:
-            logger.info('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.item())
+            logger.info(
+                f"Train Epoch: {epoch:2d} [{batch_idx * len(data):5d}/{len(train_loader.dataset):5d}"
+                f"({100. * batch_idx / len(train_loader):3.0f}%)] Loss: {loss.item():.6f}"
             )
 
 
@@ -41,23 +39,28 @@ def test(model, device, test_loader):
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
             output = model(data)
-            test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
-            pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
+            # sum up batch loss
+            test_loss += F.nll_loss(output, target, reduction="sum").item()
+            # get the index of the max log-probability
+            pred = output.argmax(dim=1, keepdim=True)
             correct += pred.eq(target.view_as(pred)).sum().item()
-
     test_loss /= len(test_loader.dataset)
 
-    logger.info('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        test_loss, correct, len(test_loader.dataset),
-        100. * correct / len(test_loader.dataset))
+    logger.info(
+        f"\nTest set: Average loss: {test_loss:.4f}, "
+        f"Accuracy: {correct}/{len(test_loader.dataset)}"
+        f"({100. * correct / len(test_loader.dataset):.0f}%)\n"
     )
 
 
 def main(CONFIG):
     # Set device
-    if CONFIG.USE_GPU is None: CONFIG.USE_GPU = torch.cuda.is_available()
-    if CONFIG.USE_GPU: logger.info("Using GPU 💨")
-    else: logger.warn("Using CPU 🐌")
+    if CONFIG.USE_GPU is None:
+        CONFIG.USE_GPU = torch.cuda.is_available()
+    if CONFIG.USE_GPU:
+        logger.info("Using GPU 💨")
+    else:
+        logger.warn("Using CPU 🐌")
     device = torch.device("cuda" if CONFIG.USE_GPU else "cpu")
 
     # Set random seed for reproducibility
@@ -66,21 +69,20 @@ def main(CONFIG):
         logger.info(f"Random seed not specified: using seed {CONFIG.SEED} 🎲")
     torch.manual_seed(CONFIG.SEED)
 
-    train_kwargs = {'batch_size': CONFIG.TRAIN.BATCH_SIZE}
-    test_kwargs = {'batch_size': CONFIG.TEST.BATCH_SIZE}
+    train_kwargs = {"batch_size": CONFIG.TRAIN.BATCH_SIZE}
+    test_kwargs = {"batch_size": CONFIG.TEST.BATCH_SIZE}
     if CONFIG.USE_GPU:
-        cuda_kwargs = {'num_workers': 1,
-                       'pin_memory': True,
-                       'shuffle': True}
+        cuda_kwargs = {"num_workers": 1, "pin_memory": True, "shuffle": True}
         train_kwargs.update(cuda_kwargs)
         test_kwargs.update(cuda_kwargs)
 
-    transform=transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-    ])
-    train_dataset = datasets.MNIST('./data', train=True, download=True, transform=transform)
-    test_dataset = datasets.MNIST('./data', train=False, transform=transform)
+    transform = transforms.Compose(
+        [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+    )
+    train_dataset = datasets.MNIST(
+        "./data", train=True, download=True, transform=transform
+    )
+    test_dataset = datasets.MNIST("./data", train=False, transform=transform)
     train_loader = torch.utils.data.DataLoader(train_dataset, **train_kwargs)
     test_loader = torch.utils.data.DataLoader(test_dataset, **test_kwargs)
 
@@ -93,7 +95,7 @@ def main(CONFIG):
         test(model, device, test_loader)
         scheduler.step()
 
-    torch.save(model.state_dict(), "mnist_cnn.pth")
+    torch.save(model.state_dict(), "checkpoints/mnist_cnn.pth")
 
 
 if __name__ == "__main__":

@@ -12,3 +12,5 @@ optuna==2.3.0
 omegaconf==2.0.5
 # For pretty console logs
 rich==9.5.1
+# For prettifying Python code
+black==20.8b1

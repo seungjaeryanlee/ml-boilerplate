@@ -28,4 +28,3 @@ class SimpleConvNet(nn.Module):
         output = F.log_softmax(x, dim=1)
 
         return output
-
