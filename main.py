@@ -13,6 +13,10 @@ from networks import SimpleConvNet
 from loggers import get_default_logger
 
 
+# Initialize global logger
+logger = get_default_logger()
+
+
 def train(CONFIG, model, device, train_loader, optimizer, epoch):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
@@ -23,9 +27,10 @@ def train(CONFIG, model, device, train_loader, optimizer, epoch):
         loss.backward()
         optimizer.step()
         if batch_idx % CONFIG.LOG.INTERVAL == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+            logger.info('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.item()))
+                100. * batch_idx / len(train_loader), loss.item())
+            )
 
 
 def test(model, device, test_loader):
@@ -42,15 +47,13 @@ def test(model, device, test_loader):
 
     test_loss /= len(test_loader.dataset)
 
-    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+    logger.info('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
         test_loss, correct, len(test_loader.dataset),
-        100. * correct / len(test_loader.dataset)))
+        100. * correct / len(test_loader.dataset))
+    )
 
 
 def main(CONFIG):
-    # Initialize logger
-    logger = get_default_logger()
-
     # Set device
     if CONFIG.USE_GPU is None: CONFIG.USE_GPU = torch.cuda.is_available()
     if CONFIG.USE_GPU: logger.info("Using GPU 💨")
@@ -75,13 +78,11 @@ def main(CONFIG):
     transform=transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,))
-        ])
-    dataset1 = datasets.MNIST('./data', train=True, download=True,
-                       transform=transform)
-    dataset2 = datasets.MNIST('./data', train=False,
-                       transform=transform)
-    train_loader = torch.utils.data.DataLoader(dataset1,**train_kwargs)
-    test_loader = torch.utils.data.DataLoader(dataset2, **test_kwargs)
+    ])
+    train_dataset = datasets.MNIST('./data', train=True, download=True, transform=transform)
+    test_dataset = datasets.MNIST('./data', train=False, transform=transform)
+    train_loader = torch.utils.data.DataLoader(train_dataset, **train_kwargs)
+    test_loader = torch.utils.data.DataLoader(test_dataset, **test_kwargs)
 
     model = SimpleConvNet().to(device)
     optimizer = optim.Adadelta(model.parameters(), lr=CONFIG.TRAIN.LEARNING_RATE)
