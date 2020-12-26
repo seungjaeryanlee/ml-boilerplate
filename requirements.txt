@@ -1,0 +1,7 @@
+# Specify PyPI packages and their versions
+#
+# This is requirements.txt, where PyPI packages and their versions are specified
+# for consistency and ease of setup. It is recommended that the packages are
+# divided into groups separated by whitespace for better readability.
+#
+# For more details, read https://pip.pypa.io/en/stable/user_guide/#requirements-files
